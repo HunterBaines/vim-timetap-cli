@@ -13,11 +13,14 @@ $ git clone https://github.com/HunterBaines/vim-timetap-cli.git
 # change into the project's root directory
 $ cd vim-timetap-cli/
 
-# make sure the program is executable
-$ chmod +x vim-timetap.py
+# copy the program into what you want the executable to be called, e.g.:
+$ cp vimtimetap.py vim-timetap
 
-# copy the program (minus its extension) to some directory in your PATH, e.g.:
-$ cp vim-timetap.py ~/.local/bin/vim-timetap
+# make this newly copied file executable
+$ chmod +x vim-timetap
+
+# move this newly executable file to somewhere in your PATH, e.g.:
+$ mv vim-timetap ~/.local/bin/
 ```
 
 If you already have
@@ -101,8 +104,8 @@ To subtract one day from the end date, use `--exclude`: `vim-timetap
 
 ### Changing the Format of Output ###
 By default, entries are grouped by file extension. Use `--names` to display
-filenames instead (e.g., "vim-timetap.py") and `--paths` to display the
-full path to each file (e.g., "/home/user/vim-timetap-cli/vim-timetap.py").
+filenames instead (e.g., "vimtimetap.py") and `--paths` to display the
+full path to each file (e.g., "/home/user/vim-timetap-cli/vimtimetap.py").
 To display paths organized as a tree, use `--tree`. And, finally, use
 `--dates` to display dates instead of file information.
 
