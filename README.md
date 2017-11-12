@@ -21,8 +21,8 @@ $ cp vim-timetap.py ~/.local/bin/vim-timetap
 ```
 
 If you already have
-[vim-timetap](https://github.com/rainerborene/vim-timetap) installed, you
-should now be able to do something like this:
+[vim-timetap](https://github.com/rainerborene/vim-timetap#installation)
+installed, you should now be able to do something like this:
 
 ```shell
 # edit a random file in Vim and write the changes
