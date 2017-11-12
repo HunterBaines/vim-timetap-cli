@@ -287,6 +287,7 @@ def populate_database_dict(database_filename, database_dict, key_type=None):
         tokens = line.split(":")
         if len(tokens) < 3:
             continue
+        assert len(tokens) == 3
 
         # The path has its own quotes around it and a leading '{'
         path = tokens[0].replace("\'", "").strip("{")
@@ -300,6 +301,9 @@ def populate_database_dict(database_filename, database_dict, key_type=None):
         else:
             filetitle = _parse_filetype(path)
 
+        # Verify that next element after `tokens[1]` should represent total
+        # seconds
+        assert "total" in tokens[1]
         try:
             # Before stripping, this has the form, e.g., " 109}}"
             seconds = int(tokens[2].strip("}"))
@@ -320,7 +324,9 @@ def _parse_date(filename):
         file_month = int(filename[4:6])
         file_day = int(filename[6:8])
     except ValueError:
-        # "full.db" should be the only one to see this
+        # "full.db", the datebase containing all data, is the only TimeTap
+        # database file whose name doesn't follow the "YYYYMMDD.db" format
+        assert filename == "full.db"
         return "ALL"
 
     # These should always be valid
