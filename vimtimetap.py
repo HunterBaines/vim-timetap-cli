@@ -477,30 +477,28 @@ def _print_database_as_tree(database, start_date, end_date=None):
 def _populate_database_tree_entries(database_trie, entries, indent=0, time_width=0):
     # Populate entries with formatted strings derived from database_trie
     tab_width = 2
-    leader_char = "-"
+    # The band of characters connecting times to directories/filenames
+    leader = "- " * (indent // 2)
 
     if not database_trie.goto:
         return
-    for key in sorted(database_trie.goto):
-        value = database_trie.goto[key].value
-        time = "{}h {:02}m {:02}s ".format(*_seconds_to_hms(value))
-        # Set `time_width` based on root, which has longest len(time) since
-        # it's the overall sum
+    for directory in sorted(database_trie.goto):
+        seconds = database_trie.goto[directory].value
+        time = "{}h {:02}m {:02}s ".format(*_seconds_to_hms(seconds))
+        # Set `time_width` based on root, which has longest `len(time)`
+        # since it's the overall sum
         if time_width == 0:
             time_width = len(time)
         entry = " " * (time_width - len(time))
         entry += time
-        for i in range(indent):
-            if i % tab_width == 0:
-                entry += leader_char
-            else:
-                entry += " "
-        entry += key
-        # Append '/' to directories aside from root
-        if database_trie.goto[key].goto and indent:
+        entry += leader
+        entry += directory
+        # Append '/' to directories (aside from root)
+        if database_trie.goto[directory].goto and indent:
             entry += "/"
         entries.append(entry)
-        _populate_database_tree_entries(database_trie.goto[key], entries, indent + 2, time_width)
+        _populate_database_tree_entries(database_trie.goto[directory], entries,
+                                        indent=indent+tab_width, time_width=time_width)
 
 
 def _directories_in_path(path):
