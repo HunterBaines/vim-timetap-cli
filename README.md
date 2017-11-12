@@ -95,7 +95,7 @@ current year, month, or day, respectively. So, for example, to see what you
 were working on in 2016 on this day, `vim-timetap --end-year 2016` could be
 used.
 
-To subtract 1 day from the end date, use `--exclude`: `vim-timetap
+To subtract one day from the end date, use `--exclude`: `vim-timetap
 --exclude`, therefore, displays a summary of yesterday. 
 
 
