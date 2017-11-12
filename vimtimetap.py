@@ -207,20 +207,21 @@ def generated_database_filenames(start_date, end_date=None):
     elif end_date is not None and end_date < start_date:
         return []
 
-    viable_database_filenames = []
-    date = datetime.today() if end_date is None else end_date
+    database_filenames = []
+    end_date = datetime.today() if end_date is None else end_date
 
-    while not _equal_dates(start_date, date):
-        # The files are of the form 20170310.db
-        database_filename = date.strftime("%Y%m%d") + ".db"
-        viable_database_filenames.append(database_filename)
-        date = date - timedelta(days=1)
+    while not _equal_dates(start_date, end_date):
+        # The files are of the form YYYYMMDD.db, e.g., 20170310.db
+        filename = start_date.strftime("%Y%m%d") + ".db"
+        database_filenames.append(filename)
+        start_date = start_date + timedelta(days=1)
 
-    database_filename = date.strftime("%Y%m%d") + ".db"
-    viable_database_filenames.append(database_filename)
+    # Include the file for `end_date`
+    filename = start_date.strftime("%Y%m%d") + ".db"
+    database_filenames.append(filename)
 
     # This will be in order from earliest date to latest
-    return reversed(viable_database_filenames)
+    return database_filenames
 
 
 def populate_database_dict(database_filename, database_dict, key_type=None):
