@@ -6,7 +6,7 @@
 
 """Collect and display time data saved by Vim TimeTap.
 
-Gather, filter, and summarize time data saved by the Vim time tracking
+Gather, filter, and summarize time data saved by the Vim time-tracking
 plugin by Rainer Borene, vim-timetap: github.com/rainerborene/vim-timetap.
 
 """
@@ -90,7 +90,6 @@ def main():
             except KeyError:
                 pass
 
-
     # By default, the regex used for filtering matches everything
     regex = r"(^.*$)"
     if args.filter is not None:
@@ -103,6 +102,8 @@ def main():
         pass
     elif key_type == DatabaseDisplayKey.TREE:
         tree = True
+        # Conversion to list is not strictly required since the function
+        # this will be passed to just expects an iterable
         database = time_per_type.items()
     else:
         # Sort from most to least time
@@ -163,28 +164,36 @@ def check_database():
     # Combine data
     joined_per_file = {}
     for filename, time in by_date_time_per_file.items():
+        # The last elem in the list will be the time for the same file from
+        # `full_time_per_file` (if it exists there)
         joined_per_file[filename] = [time, 0]
     for filename, time in full_time_per_file.items():
         try:
             joined_per_file[filename][1] = time
         except KeyError:
+            # Filename in `full_time_per_file` that was not in
+            # `by_date_time_per_file`
             joined_per_file[filename] = [0, time]
 
     # Find and display differences
     total_seconds_difference = 0
+    # Where `x` represents (filename, [by_date_time, full_time])
     inconsistent_entries = filter(lambda x: x[1][0] != x[1][1], joined_per_file.items())
     for filename, times in sorted(inconsistent_entries, key=lambda x: x[0]):
-        print("{}:\n\t{} vs {} s (date database vs full)".format(filename, *times))
+        print("{}:".format(filename))
+        print("\t{} vs {} s (date database vs full)".format(*times))
         total_seconds_difference += abs(times[1] - times[0])
-    print("TOTAL:\n\t{} s\n".format(total_seconds_difference))
+    print("TOTAL:")
+    print("\t{} s".format(total_seconds_difference))
+    print()
 
 
 def generated_database_filenames(start_date, end_date=None):
     """Return sorted filenames matching the given date range.
 
-    Generate TimeTap-style filenames for all dates from `start_date` to
-    `end_date` inclusive in order from filenames representing the earliest
-    data to those representing the latest.
+    Generate TimeTap-style filenames (YYYYMMDD.db) for all dates from
+    `start_date` to `end_date` inclusive in order from filenames representing
+    the earliest data to those representing the latest.
 
     Parameters
     ----------
@@ -200,6 +209,15 @@ def generated_database_filenames(start_date, end_date=None):
         A list of TimeTap-style filenames between `start_date` and
         `end_date` inclusive or a list containing only the filename of the
         full database if `start_date` is None.
+
+    Examples
+    --------
+    >>> from datetime import datetime
+    >>> import vimtimetap
+    >>> start_date = datetime(year=2017, month=10, day=29)
+    >>> end_date = datetime(year=2017, month=11, day=2)
+    >>> vimtimetap.generated_database_filenames(start_date, end_date=end_date)
+    ['20171029.db', '20171030.db', '20171031.db', '20171101.db', '20171102.db']
 
     """
     if start_date is None:
@@ -225,16 +243,26 @@ def generated_database_filenames(start_date, end_date=None):
 
 
 def populate_database_dict(database_filename, database_dict, key_type=None):
-    """Populate given database with data from given file.
+    """Populate given database dictionary with data from given file.
+
+    Add or update mappings of names (e.g., filenames, dates---the exact
+    format is determined by `key_type`) to the number of seconds associated
+    with that name based on data in the file called `database_filename`,
+    which has a format like the following:
+
+    {'/tmp/crontab.t1M3Tp/crontab': {'total': 134}}
+    {'/etc/ssmtp/ssmtp.conf': {'total': 1873}}
+    {'/home/user/.bashrc': {'total': 636}}
 
     Parameters
     ----------
     database_filename : str
-        The name of the TimeTap file to pull data from.
+        The name of a file in `TIMETAP_DIR` from which data will be pulled
+        to add to or update `database_dict`.
     database_dict : dict of str to int
         A mapping of names (e.g., of filenames, paths, dates, etc.) to the
-        number of seconds associated with each name, which will be
-        populated with additional names and seconds.
+        number of seconds associated with each name, which will be updated
+        with new mappings or incremented times.
     key_type : DatabaseDisplayKey constant, optional
         A constant that determines what type of key is used in populating
         the `database_dict` (default DatabaseDisplayKey.FILETYPE).
@@ -244,21 +272,24 @@ def populate_database_dict(database_filename, database_dict, key_type=None):
     timetap_db = os.path.join(TIMETAP_DIR, database_filename)
 
     try:
-        with open(timetap_db, "r") as data:
-            data = data.read().split("\n")
+        with open(timetap_db, "r") as database:
+            data = database.read().splitlines()
     except IOError:
         return
 
     if key_type == DatabaseDisplayKey.DATE:
+        # This will be the same for all lines in `data`, so it's not worth
+        # recalculating it each iteration
         file_date = _parse_date(database_filename)
 
     for line in data:
+        # For lines like "{'/home/user/test.py': {'total': 104}}"
         tokens = line.split(":")
         if len(tokens) < 3:
             continue
 
         # The path has its own quotes around it and a leading '{'
-        path = tokens[0].replace("\'", "")[1:]
+        path = tokens[0].replace("\'", "").strip("{")
 
         if key_type == DatabaseDisplayKey.DATE:
             filetitle = file_date
@@ -270,8 +301,8 @@ def populate_database_dict(database_filename, database_dict, key_type=None):
             filetitle = _parse_filetype(path)
 
         try:
-            # Before stripping, this has the form, e.g., "109}}"
-            seconds = int(tokens[2].strip('}'))
+            # Before stripping, this has the form, e.g., " 109}}"
+            seconds = int(tokens[2].strip("}"))
         except ValueError:
             seconds = 0
 
@@ -282,8 +313,9 @@ def populate_database_dict(database_filename, database_dict, key_type=None):
 
 
 def _parse_date(filename):
-    # Return a %Y %b %d formatted string based on timetap database filename
+    # Return a %Y %b %d formatted string based on TimeTap database filename
     try:
+        # `filename` has the form "YYYYMMDD.db"
         file_year = int(filename[:4])
         file_month = int(filename[4:6])
         file_day = int(filename[6:8])
@@ -305,7 +337,7 @@ def _parse_filetype(path):
 
 
 def filter_database_dict(database_dict, regex):
-    """Filter the given database according to the given regular expression.
+    """Remove items in database dict whose keys don't matching the regex.
 
     Parameters
     ----------
@@ -314,9 +346,9 @@ def filter_database_dict(database_dict, regex):
         number of seconds associated with each name, whose keys will be
         filtered according to regular expression defined by `regex`.
     regex : str
-        A string representing a regular expression; only keys in
-        `database_dict` that match this regular expression will be included
-        in the new `database_dict`.
+        A string representing a regular expression; only items in
+        `database_dict` whose keys match this regular expression will be
+        remain in `database_dict`.
 
     """
     regex_engine = re.compile(regex)
@@ -335,14 +367,15 @@ def print_database(database, start_date, end_date=None, tree=False):
 
     Print the number of hours, minutes, and seconds associated with each
     filename, path, or date in `database` along with a title based on
-    `start_date` and `end_date` at the start and a sum at the end.
+    `start_date` and `end_date` at the beginning and a sum at the end.
 
     Parameters
     ----------
     database : iterable of (str, int) tuple
         An iterable of tuples of the form (NAME, SECONDS), where NAME is a
-        string naming a filename, path, or date, and SECONDS is the number
-        of seconds associated with that filename, path, or date.
+        string representing, for instance, a filename, path, or date, and
+        SECONDS is the number of seconds associated with that filename,
+        path, or date.
     start_date : datetime instance
         The earliest date covered by data in `database`, which is used in
         creating the title printed.
@@ -399,8 +432,7 @@ def print_database(database, start_date, end_date=None, tree=False):
     padding = " " * (max_type_len - len(foottype))
 
     print("-" * text_width)
-    print("{}{} {:>6}h {:02}m {:02}s".format(padding, foottype,
-                                             *_seconds_to_hms(overall_seconds)))
+    print("{}{} {:>6}h {:02}m {:02}s".format(padding, foottype, *_seconds_to_hms(overall_seconds)))
     print()
 
 
@@ -503,17 +535,20 @@ def _populate_database_tree_entries(database_trie, entries, indent=0, time_width
 
 
 def _directories_in_path(path):
-    # Return the directories (and file, if one) along a given path
+    # Return an iterator of directories/file along a given path
     directories = []
-    path, directory = os.path.split(path)
+    head, tail = os.path.split(path)
 
-    while directory:
-        directories.append(directory)
-        path, directory = os.path.split(path)
+    while tail:
+        directories.append(tail)
+        # `os.path.split("/")` equals `("/", "")`, so this loop ends when
+        # `head` is the path to the root directory
+        head, tail = os.path.split(head)
 
-    directories.append(path)
+    # Append root directory
+    directories.append(head)
 
-    # Return in order from closest to root to farthest
+    # Return directories in order from closest to root to farthest
     return reversed(directories)
 
 
