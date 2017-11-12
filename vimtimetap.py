@@ -445,10 +445,6 @@ def _equal_dates(date1, date2):
 
 def _print_database_as_tree(database, start_date, end_date=None):
     # Print database in tree order.
-    if not database:
-        print()
-        return
-
     path_trie = TrieNode(0)
 
     # Assumes the database contains paths, not file types or filenames
@@ -470,6 +466,8 @@ def _print_database_as_tree(database, start_date, end_date=None):
     print(title)
     print()
 
+    if not tree_entries:
+        tree_entries.append("0h 00m 00s /")
     for entry in tree_entries:
         print(entry)
 
