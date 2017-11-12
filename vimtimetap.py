@@ -477,7 +477,7 @@ def _print_database_as_tree(database, start_date, end_date=None):
 def _populate_database_tree_entries(database_trie, entries, indent=0, time_width=0):
     # Populate entries with formatted strings derived from database_trie
     tab_width = 2
-    leader_char = '.'
+    leader_char = "-"
 
     if not database_trie.goto:
         return
