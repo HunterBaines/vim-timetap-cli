@@ -116,3 +116,41 @@ To ignore other time options and simply include all data, use `--all`.
 To filter the output, use `--filter REGEX`. For example, time spent on this
 project could be found using `vim-timetap --all --paths --filter
 ".*/vim-timetap-cli/.*"`.
+
+
+Example: Emailing a Weekly Digest
+---------------------------------
+This example uses `mutt` and `cron` to send a weekly digest to your email.
+It assumes `mutt` is already set up to send email; if not, see
+[this tutorial for setting it up with
+Gmail](https://www.garron.me/en/go2linux/send-mail-gmail-mutt.html), for
+instance.
+
+A Bash script,
+"[cron-mail.sh](https://raw.githubusercontent.com/HunterBaines/vim-timetap-cli/master/extra/cron-mail.sh)",
+is included in the "extra" directory to help with this. Look over it and
+change the constant `MUTTRC` if needed. Make sure the script is executable,
+and then copy it to somewhere convenient: somewhere in your PATH can be
+used if you want, but the full path should be given to `cron` either way,
+so it's not necessary.
+
+Next, edit your crontab:
+
+```shell
+$ crontab -e
+```
+
+And add to it this line:
+
+```
+0 11 * * 1 ~/.local/bin/vim-timetap -x 8 | ~/.local/bin/cron-mail.sh "TimeTap Digest" user@example.com
+```
+
+This will send an email every Monday at 11:00AM summarizing activity from
+the previous Monday up until the most recent Sunday. Remember to update
+"user@example.com" with the actual address you want this sent to, and, if
+needed, change the paths to `cron-mail.sh` and `vim-timetap` (assuming
+that's what you named your version of the "vimtimetap.py" in your PATH).
+Also, since `cron` only runs a task if your computer is on at the defined
+time, you may want to change that time from 11:00AM to some other time you
+know your computer will be on at (or look into using `anacron`).
