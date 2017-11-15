@@ -11,6 +11,7 @@ plugin by Rainer Borene, vim-timetap: github.com/rainerborene/vim-timetap.
 
 """
 import argparse
+import json
 import os
 import re
 from datetime import datetime, timedelta
@@ -284,13 +285,13 @@ def populate_database_dict(database_filename, database_dict, key_type=None):
 
     for line in data:
         # For lines like "{'/home/user/test.py': {'total': 104}}"
-        tokens = line.split(":")
-        if len(tokens) < 3:
-            continue
-        assert len(tokens) == 3
+        # json properties should use double quotes; the lines use single
+        line_dict = json.loads(line.replace("'", '"'))
 
-        # The path has its own quotes around it and a leading '{'
-        path = tokens[0].replace("\'", "").strip("{")
+        # Only one path key should be in each `line_dict`
+        assert len(line_dict) == 1
+        path = list(line_dict).pop()
+        seconds = line_dict[path]["total"]
 
         if key_type == DatabaseDisplayKey.DATE:
             filetitle = file_date
@@ -300,15 +301,6 @@ def populate_database_dict(database_filename, database_dict, key_type=None):
             filetitle = os.path.basename(path)
         else:
             filetitle = _parse_filetype(path)
-
-        # Verify that next element after `tokens[1]` should represent total
-        # seconds
-        assert "total" in tokens[1]
-        try:
-            # Before stripping, this has the form, e.g., " 109}}"
-            seconds = int(tokens[2].strip("}"))
-        except ValueError:
-            seconds = 0
 
         try:
             database_dict[filetitle] += seconds
