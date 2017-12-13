@@ -33,7 +33,7 @@ class TrieNode(object):
         self.goto = {}
 
 
-TIMETAP_DIR = os.path.join(os.path.expanduser("~"), ".timetap")
+TIMETAP_DIR = os.path.expanduser("~/.timetap")
 
 
 def main():
