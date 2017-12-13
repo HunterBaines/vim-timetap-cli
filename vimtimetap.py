@@ -405,32 +405,24 @@ def print_database(database, start_date, end_date=None, tree=False):
     # 16 is the length of the part after the type, e.g., "      3h 01m 15s"
     max_entry_len = max_type_len + 16
     text_width = max(len(title), max_entry_len)
-    # Padding to center the title
-    padding = " " * ((text_width - len(title)) // 2)
 
-    # Increase width to make title truly centered
-    if len(padding) % 2:
-        padding += " "
+    if (text_width - len(title)) % 2:
+        # Increase width so title can be truly centered
         text_width += 1
 
-    print("{}{}".format(padding, title))
+    print("{:^{width}}".format(title, width=text_width))
     print("=" * text_width)
 
-    # Adjust max_type_len to center data as best as possible below
-    max_type_len += ((text_width - max_entry_len) // 2)
     overall_seconds = 0
-
     for filetitle, raw_seconds in database:
         overall_seconds += raw_seconds
-        padding = " " * (max_type_len - len(filetitle))
         # >6: 1000000h+ programmers can deal with misaligned text
-        print("{}{} {:>6}h {:02}m {:02}s".format(padding, filetitle,
-                                                 *_seconds_to_hms(raw_seconds)))
-
-    padding = " " * (max_type_len - len(foottype))
+        entry = "{} {:>6}h {:02}m {:02}s".format(filetitle, *_seconds_to_hms(raw_seconds))
+        print("{:>{width}}".format(entry, width=text_width))
 
     print("-" * text_width)
-    print("{}{} {:>6}h {:02}m {:02}s".format(padding, foottype, *_seconds_to_hms(overall_seconds)))
+    summary = "{} {:>6}h {:02}m {:02}s".format(foottype, *_seconds_to_hms(overall_seconds))
+    print("{:>{width}}".format(summary, width=text_width))
     print()
 
 
