@@ -13,14 +13,9 @@ $ git clone https://github.com/HunterBaines/vim-timetap-cli.git
 # change into the project's root directory
 $ cd vim-timetap-cli/
 
-# copy the program into what you want the executable to be called, e.g.:
-$ cp vimtimetap.py vim-timetap
-
-# make this newly copied file executable
-$ chmod +x vim-timetap
-
-# move this newly executable file to somewhere in your PATH, e.g.:
-$ mv vim-timetap ~/.local/bin/
+# run the install script, which simply makes an executable copy of the
+# program and moves that executable to a chosen location in your PATH
+$ ./install.sh
 ```
 
 If you already have
@@ -143,14 +138,14 @@ $ crontab -e
 And add to it this line:
 
 ```
-0 11 * * 1 ~/.local/bin/vim-timetap -x 8 | ~/.local/bin/cron-mail.sh "TimeTap Digest" user@example.com
+0 11 * * 1 ~/bin/vim-timetap -x 8 | ~/bin/cron-mail.sh "TimeTap Digest" user@example.com
 ```
 
 This will send an email every Monday at 11:00AM summarizing activity from
 the previous Monday up until the most recent Sunday. Remember to update
 "user@example.com" with the actual address you want this sent to, and, if
 needed, change the paths to `cron-mail.sh` and `vim-timetap` (assuming
-that's what you named your version of the "vimtimetap.py" in your PATH).
-Also, since `cron` only runs a task if your computer is on at the defined
-time, you may want to change that time from 11:00AM to some other time you
-know your computer will be on at (or look into using `anacron`).
+that's what the copy of "vimtimetap.py" in your PATH is named).  Also,
+since `cron` only runs a task if your computer is on at the defined time,
+you may want to change that time from 11:00AM to some other time you know
+your computer will be on at (or look into using `anacron`).
