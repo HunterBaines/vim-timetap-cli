@@ -54,7 +54,7 @@ def main():
         end_date = datetime(year=args.end_year, month=args.end_month, day=args.end_day)
     except ValueError as err:
         # An invalid end date
-        parser.error(err.message.lower())
+        parser.error(str(err).lower())
 
     # Each arg returns the number of days in its unit or 0 (and only one
     # can be nonzero)
